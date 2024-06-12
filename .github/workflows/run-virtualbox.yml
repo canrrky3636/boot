@@ -1,0 +1,31 @@
+name: Run VirtualBox VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-vm:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install VirtualBox
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y virtualbox
+
+    - name: Download VM image
+      run: |
+        mkdir -p ~/VirtualBox\ VMs/my-vm
+        cp my-virtual-machine.vdi ~/VirtualBox\ VMs/my-vm/
+
+    - name: Create and start VM
+      run: |
+        VBoxManage createvm --name my-vm --register
+        VBoxManage storagectl my-vm --name "SATA Controller" --add sata --controller IntelAHCI
+        VBoxManage storageattach my-vm --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium ~/VirtualBox\ VMs/my-vm/my-virtual-machine.vdi
+        VBoxManage modifyvm my-vm --memory 2048 --vram 128 --nic1 nat
+        VBoxManage startvm my-vm --type headless
